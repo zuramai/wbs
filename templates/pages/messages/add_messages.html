@@ -1,0 +1,113 @@
+{% include 'include/header.html' %}
+
+<div class="content">
+	<div class="content-header">
+		<div class="page-title">
+			<h3>Send Messages</h3>
+		</div>
+		<div class="page-breadcumb">
+
+			<nav aria-label="breadcrumb">
+			  <ol class="breadcrumb">
+			    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+			    <li class="breadcrumb-item" aria-current="page"><a href="{{ url_for('messages') }}">Messages</a></li>
+			    <li class="breadcrumb-item active" aria-current="page">Send Messages</li>
+			  </ol>
+			</nav>
+		</div>
+	</div>
+	<div class="content-body">
+
+		<section  class="chart">
+			<div class="panel">
+				<div class="panel-header d-flex align-items-center justify-content-between">
+						<div class="panel-title">
+							<i class="fa fa-users"></i> 	  	 Send Message
+						</div>
+						<div>
+							
+						</div>
+				</div>
+				<div class="panel-body">
+					<div class="form">
+						<form method="POST" action="">
+							<div class="form-group">
+								<label>Choose type :</label>
+								<div class="check-group">
+									<div class="form-check">
+									  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios1" value="option1" checked>
+									  <label class="form-check-label" for="exampleRadios1">
+									    Single target
+									  </label>
+									</div>
+									<div class="form-check">
+									  <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios1" value="option1" checked>
+									  <label class="form-check-label" for="exampleRadios1">
+									    All Contacts
+									  </label>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label>Target</label>
+								<input type="number" name="target" class="form-control" placeholder="628134..">
+							</div>
+							<div class="form-group">
+								<label>Message </label>
+								<textarea class="form-control" name="message" placeholder="Your message.."></textarea>
+							</div>
+							<div class="form-group" style="overflow: hidden;">
+								<input type="submit" class="btn btn-primary float-right" value="Send" name="send">
+							</div>
+						</form>
+					</div>
+					
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+<!-- Button trigger modal -->
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Choose One</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+        	<div class="col-md-6">
+        		<div class="btn-contacts">
+
+        			<a href="{{url_for('contacts')}}/add" class="btn btn-outline-primary">
+        				<i class="fa fa-plus"></i>
+        				<span>
+        					Add Manual
+        				</span>
+        			</a>
+        		</div>
+        	</div>
+        	<div class="col-md-6">
+        		<div class="btn-contacts">
+        			<a href="#" class="btn btn-outline-info" id="upload_csv">
+        				<i class="fa fa-download"></i>
+        				
+        				<span>
+        					Import From CSV
+        				</span>
+        			</a>
+        		</div>
+        	</div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+{% include 'include/footer.html' %}

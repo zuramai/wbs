@@ -1,0 +1,410 @@
+@font-face {
+	font-family: 'Viga';
+	src: url('../fonts/Viga-Regular.ttf');
+}
+
+
+@font-face {
+	font-family: 'Lato-B';
+	src: url('../fonts/Lato-Bold.ttf');
+}
+
+@font-face {
+	font-family: 'Painter';
+	src: url('../fonts/Painter_PERSONAL_USE_ONLY.ttf');
+}
+
+body {
+	height: 100%;
+	background-color: #F2F3F8;
+	font-family: 'Lato', sans-serif;
+}
+
+.btn-primary {
+	background-color: #508AEB ;
+}
+
+
+.bodyLogin {
+	  background: linear-gradient(to right, #4e54c8, #8f94fb); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.kotakLogin {
+	background-color: #fff;
+}
+
+
+
+.loginHeader {
+	font-size: 30px;
+	font-family: 'Viga';
+	
+}
+
+.loginHeader h3 {
+	
+	
+}
+
+.login-form {
+	padding: 20px;
+
+}
+
+.btn-primary {
+	background-color: #508AEB;
+}
+
+.btn-primary:hover {
+	background-color: #555BEA;
+}
+
+.sidebar {
+	width: 270px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	height: 102%;
+}
+
+.main-sidebar {
+	display: flex;
+	align-items: stretch;
+}
+
+.sidebar-header {
+	
+	height: 70px;
+}
+
+.sidebar-header h3 {
+}
+
+.navbar-brand {
+	font-size: 30px;
+	color: #fff !important;
+	font-family: 'Painter';
+
+}
+
+.navbar-laravel {
+    background-color: #1EA8AA;
+    height: 60px;
+    padding: 0;
+}
+
+.logo {
+	width: 250px;
+}
+
+
+.navbar-brand {
+	padding: 0;
+}
+
+.sidebar {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 250px;
+	background-color: #fff;
+	border-right: 1px solid #dcdede;
+	box-shadow: 1px 1px 5px #ccc;
+	margin-top: 60px;
+}
+
+.side-link {
+	padding: 10px 25px;
+	display: block;
+	color: rgb(100, 100, 100);
+	width: 100%;
+	transition: all .1s;
+	font-family: 'Lato'
+}
+
+.side-link:hover {
+	
+	text-decoration: none;
+	color: #1EA8AA
+}
+
+.side-link span {
+	margin-left: 20px; 
+}
+
+.sidebar .navbar-nav {
+	margin-top: 40px;
+	flex-direction: column;
+}
+
+.side-link i {
+	font-size: 14px;
+	max-width: 14px;
+}
+
+/*.content {
+	position: absolute;
+	left: 270px;
+	top: 70px;
+}*/
+
+.admin {
+	margin-left: 250px;
+}
+
+.py-4 {
+	padding-left: 1.5rem;
+	padding-right: 1.5rem;
+}
+
+.isi {
+	background-color: red;
+}
+
+.breadcrumb {
+	background-color: transparent;
+	padding-left:0;
+	padding-top: 0;
+}
+
+.kotak-statistic {
+	background-color: #fff;
+	width: 100%;
+	height: 150px;
+	border: 1px solid rgb(220,220,220);
+	border-top: 7px solid #3E8EF7;
+	background-color: #fff;
+	border-radius: 4px;
+	padding: 0 40px;
+}
+
+
+.statistic-icon {
+	font-size: 40px;
+}
+
+.statistic-ket {
+	text-align: right;
+}
+
+.statistic-ket > h3 {
+	font-weight: bold;
+}
+
+.statistic-ket p {
+	font-size: 12px;
+	color: #555;
+	margin-bottom: 0;
+}
+
+.st1 {
+	border-top: 7px solid #1EA8AA
+}
+
+.st2 {
+	border-top: 7px solid #e74c3c;
+}
+
+.st3 {
+	border-top: 7px solid #3E8EF7;
+}
+
+.chart {
+	margin: 20px 0;
+}
+
+.panel {
+	background-color: #fff;
+	border-radius: 4px;
+	width: 100%;
+	border: 1px solid rgb(220,220,220);
+}
+
+.panel-header {
+	padding: 10px;
+	margin: 0 20px;
+	color: rgba(70,70,70);
+	font-size: 20px;
+	font-family: 'Lato';
+}
+
+.panel-header i {
+}
+
+.panel-title {
+	margin-right: 10px;
+	
+}
+
+.panel-body {
+	min-height: 100px;
+	background-color: #fff;
+	padding: 10px;
+}
+
+.chart .panel-body {
+	padding: 10px 35px 10px;
+}
+
+.bars {
+	color: #fff;
+}
+
+.bars {
+	background-color: transparent;
+	border:1px solid #fff;
+	border-radius: 2px;
+	padding: 5px 10px;
+	transition: all .1s;
+}
+
+.bars:hover {
+	cursor: pointer;
+}
+
+.img-barang {
+	max-width: 100px;
+}
+
+
+.bodyLogin {
+	display: flex;
+	align-items: center;
+	z-index: 999;
+	height: 100vh;
+}
+
+.backgroundLogin {
+	background: linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)),url('../photos/Download-Beautiful-Nature-Images-HD-Wallpaper.jpg');
+	filter: blur(1px);
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: -1;
+}
+
+.kotakLogin {
+	background-color: rgba(255,255,255,1);
+	padding: 20px;
+	box-shadow: 5px 4px  20px #29346d;
+}
+
+.loginHeader {
+	font-family: 'Viga';
+	font-size: 20px;
+	margin-bottom: 30px;
+}
+
+.kotakLogin .form-group {
+	margin-bottom: 30px;
+}
+
+
+.navbar-header {
+	width: 100%;
+	background-color: #fff;
+	height: 70px;
+	border-bottom: 2px solid #cecece;	
+	display: flex;
+	align-items: center;
+}
+
+.navbar-header .container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.navbar-nav {
+	display: flex;
+	flex-direction: row;
+	list-style: none;
+}
+
+.nav-item {
+	margin-left: 10px;
+}
+
+.nav-link {
+	color: #222;
+	text-decoration: none;
+}
+
+.brand-img {
+	width: 150px;
+	object-fit: cover;
+}
+
+.user-img {
+	width: 100px;
+	height: 100px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+
+.nav-item {
+	font-size: 14px;
+}
+
+
+.kotakContent {
+	background-color: #fff;
+	border: 1px solid #eee;
+	padding: 20px;
+	margin-top: 40px;
+	border-radius: 5px;
+	box-shadow: 2px 5px 10px #cecece;
+}
+
+.contentHeader {
+	font-family: 'Lato-B';
+	padding-bottom: 10px;
+	display: flex;
+	justify-content: space-between;
+}
+
+.contentHeader > a {
+	font-family: sans-serif;
+}
+
+.contentIsi {
+	margin-top: 20px;
+}
+
+
+/* -------- TABLES ----------*/
+
+.table > thead {
+	background-color: #1EA8AA;
+	color: #fff;
+	border:none;
+}
+
+.table > thead > tr > th {
+	border:none;
+}
+
+.btn-contacts > .btn {
+	width: 100%;
+	height: 80px;
+}
+
+.btn-contacts  i {
+	width: 100%;
+}
+
+.form-hidden {
+	display: none;
+}
+
+.tab-pane {
+	padding: 20px;
+}
+
+.check-group{
+	margin-left: 15px;
+}

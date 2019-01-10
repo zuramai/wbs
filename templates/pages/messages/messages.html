@@ -1,0 +1,77 @@
+{% include 'include/header.html' %}
+
+<div class="content">
+	<div class="content-header">
+		<div class="page-title">
+			<h3>Messages</h3>
+		</div>
+		<div class="page-breadcumb">
+
+			<nav aria-label="breadcrumb">
+			  <ol class="breadcrumb">
+			    <li class="breadcrumb-item"><a href="#">Home</a></li>
+			    <li class="breadcrumb-item active" aria-current="page">Messages</li>
+			  </ol>
+			</nav>
+		</div>
+	</div>
+	<div class="content-body">
+
+		<section  class="chart">
+			<div class="panel">
+				<div class="panel-header d-flex align-items-center justify-content-between">
+						<div class="panel-title">
+							<i class="fa fa-envelope"></i> 	  	 Messages
+						</div>
+						<div>
+							<a href="{{ url_for('messages') }}/add" class="btn btn-primary" ><i class="fa fa-plus"></i></a>
+						</div>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-md-12">
+							<?php if (isset($msg)): ?>
+								<div class="alert alert-<?php echo $msg_type ?>" role="alert">
+									<?php echo $msg; ?>
+								</div>
+							<?php endif ?>
+
+						</div>
+					</div>
+					<div class="table-responsive">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>Sender</th>
+									<th>Receiver</th>
+									<th>Date</th>
+									<th>Time</th>
+									<th>Action</th>
+									
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>1</td>
+									<td>081380353611</td>
+									<td>081380353611</td>
+									<td>2018-01-01</td>
+									<td>12:00</td>
+									<td>
+											<a href="index.php?page=program-kerja&delete=<?php echo $program['id'] ?>" class="btn btn-danger" style="margin-bottom: 10px;">
+												<i class="fa fa-trash"></i> Hapus
+											</a>
+										</td>
+								</tr>
+								<?php } ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+
+{% include 'include/footer.html' %}
