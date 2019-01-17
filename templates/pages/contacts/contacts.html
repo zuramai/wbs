@@ -30,11 +30,16 @@
 				<div class="panel-body">
 					<div class="row">
 						<div class="col-md-12">
-							<?php if (isset($msg)): ?>
-								<div class="alert alert-<?php echo $msg_type ?>" role="alert">
-									<?php echo $msg; ?>
-								</div>
-							<?php endif ?>
+							{% with messages = get_flashed_messages(with_categories=true) %}
+								{% if messages %}
+									{% for category, message in messages %}
+										<div class="alert alert-{{ category }}" role="alert">
+											{{message}}
+										</div>
+									{% endfor %}
+								{% endif %}
+							{% endwith %}
+
 
 						</div>
 					</div>
@@ -50,17 +55,19 @@
 								</tr>
 							</thead>
 							<tbody>
+							{% for contact in contacts %}
 								<tr>
-									<td>1</td>
-									<td>081380353611</td>
-									<td>081380353611</td>
-									<td>2018-01-01</td>
+									<td>{{ contact.id }}</td>
+									<td>{{ contact.name }}</td>
+									<td>{{ contact.phone }}</td>
+									<td>{{ contact.date_added }}</td>
 									<td>
-											<a href="index.php?page=program-kerja&delete=<?php echo $program['id'] ?>" class="btn btn-danger" style="margin-bottom: 10px;">
-												<i class="fa fa-trash"></i> Hapus
-											</a>
-										</td>
+										<a href="?delete={{ contact.id }}" class="btn btn-danger" style="margin-bottom: 10px;" onclick="return confirm('Are you sure want to delete {{ contact.phone }}?')">
+											<i class="fa fa-trash"></i> Hapus
+										</a>
+									</td>
 								</tr>
+							{% endfor%}
 								<?php } ?>
 							</tbody>
 						</table>

@@ -1,21 +1,10 @@
-@font-face {
-	font-family: 'Viga';
-	src: url('../fonts/Viga-Regular.ttf');
-}
-
-
-@font-face {
-	font-family: 'Lato-B';
-	src: url('../fonts/Lato-Bold.ttf');
-}
-
-@font-face {
-	font-family: 'Painter';
-	src: url('../fonts/Painter_PERSONAL_USE_ONLY.ttf');
+@font-face{
+	font-family: 'Moon'
+	src: url('../fonts/Moon/Moon Light.otf');
 }
 
 body {
-	height: 100%;
+	min-height: 100vh;
 	background-color: #F2F3F8;
 	font-family: 'Lato', sans-serif;
 }
@@ -24,21 +13,23 @@ body {
 	background-color: #508AEB ;
 }
 
-
+/*
 .bodyLogin {
 	  background: linear-gradient(to right, #4e54c8, #8f94fb); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-}
+}*/
 
-.kotakLogin {
-	background-color: #fff;
-}
 
 
 
 .loginHeader {
 	font-size: 30px;
-	font-family: 'Viga';
-	
+	font-family: sans-serif;
+
+}
+
+.loginHeader img {
+	width: 30px;
+	height: 30px;
 }
 
 .loginHeader h3 {
@@ -84,7 +75,7 @@ body {
 .navbar-brand {
 	font-size: 30px;
 	color: #fff !important;
-	font-family: 'Painter';
+	font-family: 'Charm';
 
 }
 
@@ -121,6 +112,11 @@ body {
 	width: 100%;
 	transition: all .1s;
 	font-family: 'Lato'
+}
+
+.side-link.active {
+	color: #1EA8AA;
+	
 }
 
 .side-link:hover {
@@ -289,17 +285,19 @@ body {
 .kotakLogin {
 	background-color: rgba(255,255,255,1);
 	padding: 20px;
-	box-shadow: 5px 4px  20px #29346d;
+	background-color: #fff;
+	border:none;
+	border-radius: 2px;
 }
 
 .loginHeader {
-	font-family: 'Viga';
+	font-family: 'Lato';
 	font-size: 20px;
 	margin-bottom: 30px;
 }
 
 .kotakLogin .form-group {
-	margin-bottom: 30px;
+	/*margin-bottom: 30px;*/
 }
 
 
@@ -325,7 +323,29 @@ body {
 }
 
 .nav-item {
-	margin-left: 10px;
+	/*padding-left: 10px;*/
+}
+
+.has-sub ul {
+	margin-left: 30px;
+	list-style: none;	
+}
+
+.has-sub ul li {
+	
+}
+
+.has-sub ul li a {
+	color: rgb(120,120,120);
+	display: block;
+	width: 100%;
+	transition: all .2s;
+	padding: 5px 0
+}
+
+.has-sub ul li a:hover {
+	text-decoration: none;
+	color: #1EA8AA;
 }
 
 .nav-link {
@@ -358,6 +378,14 @@ body {
 	margin-top: 40px;
 	border-radius: 5px;
 	box-shadow: 2px 5px 10px #cecece;
+}
+
+.dont-have {
+	font-size: .7rem;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	margin-bottom: 0;
 }
 
 .contentHeader {
@@ -407,4 +435,31 @@ body {
 
 .check-group{
 	margin-left: 15px;
+}
+
+.bodyLogin {
+	background: linear-gradient(-210deg, #1EA8AA 55%,  #082b2b 45%);
+}
+
+
+.loginFooter {
+	color: #fff;
+	font-family: 'Lato';
+	font-size: 0.8rem	
+}
+
+.img-setting {
+	width: 120px;
+	height: 120px;
+	margin-bottom: 20px;
+}
+
+.btn-green {
+	background-color: #1EA8AA;
+	color: #fff;
+}
+
+.btn-green:hover {
+	background-color:  #178082;
+	color: #fff;
 }

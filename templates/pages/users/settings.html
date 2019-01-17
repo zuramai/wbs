@@ -1,0 +1,117 @@
+{% include 'include/header.html' %}
+
+<div class="content">
+	<div class="content-header">
+		<div class="page-title">
+			<h3>Settings</h3>
+		</div>
+		<div class="page-breadcumb">
+
+			<nav aria-label="breadcrumb">
+			  <ol class="breadcrumb">
+			    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+			    <li class="breadcrumb-item" aria-current="page"><a href="{{ url_for('messages') }}">Users</a></li>
+			    <li class="breadcrumb-item active" aria-current="page">Settings</li>
+			  </ol>
+			</nav>
+		</div>
+	</div>
+	<div class="content-body">
+
+		<section  class="chart">
+			<div class="panel">
+				<div class="panel-header d-flex align-items-center justify-content-between">
+						<div class="panel-title">
+							<i class="fa fa-cogs"></i> 	  	 Settings
+						</div>
+						<div>
+							
+						</div>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						{% for user in data %}
+						<div class="col-md-6">
+							<div class="d-flex justify-content-center align-items-center h-100 flex-column">
+								<img src="{{ url_for('static', filename='img/default.png') }}" class="img-setting">
+								<button type="button" class="btn btn-green">Change photo</button>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form">
+								<form method="POST" action="">
+									<div class="form-group" id="single-only">
+										<label>Full name</label>
+										<input type="text" name="target" class="form-control" value="{{user.name}}">
+									</div>
+									<div class="text-group">
+										<label>Email </label>
+										<input type="email" class="form-control" name="email" value="{{user.email}}">
+									</div>
+									<div class="form-group">
+										<label>Username</label>
+										<input type="text" name="username" class="form-control" value="{{user.username}}">
+									</div>
+									<div class="form-group" id="single-only">
+										<label>Password</label>
+										<input type="password" name="password" class="form-control" value="{{user.password}}">
+									</div>
+									<div class="form-group" style="overflow: hidden;">
+										<input type="submit" class="btn btn-primary float-right" value="Update" name="update">
+									</div>
+								</form>
+							</div>
+						</div>
+						{% endfor %}
+					</div>
+					
+					
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+<!-- Button trigger modal -->
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Choose One</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+        	<div class="col-md-6">
+        		<div class="btn-contacts">
+
+        			<a href="{{url_for('contacts')}}/add" class="btn btn-outline-primary">
+        				<i class="fa fa-plus"></i>
+        				<span>
+        					Add Manual
+        				</span>
+        			</a>
+        		</div>
+        	</div>
+        	<div class="col-md-6">
+        		<div class="btn-contacts">
+        			<a href="#" class="btn btn-outline-info" id="upload_csv">
+        				<i class="fa fa-download"></i>
+        				
+        				<span>
+        					Import From CSV
+        				</span>
+        			</a>
+        		</div>
+        	</div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+{% include 'include/footer.html' %}

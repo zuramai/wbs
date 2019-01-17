@@ -24,22 +24,36 @@
 							<i class="fa fa-users"></i> 	  	 Groups
 						</div>
 						<div>
-							<a class="btn btn-primary" href="{{ url_for('groups') }}/add"><i class="fa fa-plus"></i></a>
+							<!--<a class="btn btn-primary" href="{{ url_for('groups') }}/add"><i class="fa fa-plus"></i></a>-->
+							<div class="btn-group">
+							  <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								Menu
+							  </button>
+							  <div class="dropdown-menu dropdown-menu-right">
+								  <a href="{{ url_for('groups') }}/add" class="dropdown-item" type="button">Add Groups</a>
+								  <a href="{{ url_for('groups') }}/join" class="dropdown-item" type="button">Join all saved groups</a>
+					
+							  </div>
+							</div>
 						</div>
 				</div>
 				<div class="panel-body">
 					<div class="row">
 						<div class="col-md-12">
-							<?php if (isset($msg)): ?>
-								<div class="alert alert-<?php echo $msg_type ?>" role="alert">
-									<?php echo $msg; ?>
-								</div>
-							<?php endif ?>
+							{% with messages = get_flashed_messages(with_categories=true) %}
+								{% if messages %}
+									{% for category, message in messages %}
+										<div class="alert alert-{{ category }}" role="alert">
+											{{message}}
+										</div>
+									{% endfor %}
+								{% endif %}
+							{% endwith %}
 
 						</div>
 					</div>
 					<div class="table-responsive">
-						<table class="table table-hover">
+						<table class="table table-hover ">
 							<thead>
 								<tr>
 									<th>#</th>
@@ -50,17 +64,19 @@
 								</tr>
 							</thead>
 							<tbody>
+							{% for group in grup %}
 								<tr>
-									<td>1</td>
-									<td>Jokowi - Dodol</td>
-									<td>Example link</td>
-									<td>2018-01-01</td>
+									<td>{{ group.id }}</td>
+									<td>{{ group.group_name }}</td>
+									<td><a href="{{ group.link }}">{{ group.link }}</a></td>
+									<td>{{ group.date_added }}</td>
 									<td>
 											<a href="index.php?page=program-kerja&delete=<?php echo $program['id'] ?>" class="btn btn-danger" style="margin-bottom: 10px;">
-												<i class="fa fa-trash"></i> Hapus
+												<i class="fa fa-trash"></i>
 											</a>
 										</td>
 								</tr>
+							{% endfor %}
 								<?php } ?>
 							</tbody>
 						</table>
