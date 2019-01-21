@@ -47,12 +47,11 @@
 							<thead>
 								<tr>
 									<th>#</th>
-									<th>Sender</th>
 									<th>Receiver</th>
 									<th>Date</th>
 									<th>Time</th>
 									<th>Action</th>
-									
+
 								</tr>
 							</thead>
 							<tbody>
@@ -60,11 +59,10 @@
 								<tr>
 									<td>{{ message.id }}</td>
 									<td>{{ message.receiver }}</td>
-									<td>{{ message }}</td>
 									<td>{{ message.date }}</td>
 									<td>{{ message.time }}</td>
 									<td>
-											<a href="index.php?page=program-kerja&delete=<?php echo $program['id'] ?>" class="btn btn-danger" style="margin-bottom: 10px;">
+											<a href="?delete={{ message.id }}" class="btn btn-danger" style="margin-bottom: 10px;">
 												<i class="fa fa-trash"></i> Hapus
 											</a>
 										</td>

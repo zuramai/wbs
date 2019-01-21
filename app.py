@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import datetime, time, csv, sys
+import datetime, time, csv, sys,unicodedata
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from sqlalchemy import Column, String, TIMESTAMP, Text, Time, Date, Integer
@@ -101,22 +102,30 @@ class Contacts(db.Model):
 class Messages(db.Model):
     __tablename__ = "messages"
     id = Column("id", primary_key=1)
-    sender = Column('sender', String(14))
-    receiver = Column('sender', String(14))
+    user = Column('user', String(100))
+    receiver = Column('receiver', String(14))
     msg = Column('msg', Text())
     date = Column('date', Date())
-    time = Column('date', Time())
+    time = Column('time', Time())
 
-    def __init__(self, sender, receiver, msg, date, time):
+    def __init__(self, receiver, msg):
         self.id = id
-        self.sender = sender
+        self.user = current_user.username
         self.receiver = receiver
         self.msg = msg
-        self.date = date
-        self.time = time
+        self.date = date_now
+        self.time = time_now
 
-def waitForLogged():
+def waitForButtonSend():
     i = 0
+    while i == 0:
+        try:
+            element = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
+            )
+            i = 1
+        except:
+            i = 0
 
 
 
@@ -194,6 +203,13 @@ def settings():
 
 @app.route('/messages')
 def messages():
+    delete = request.args.get('delete')
+    if delete:
+        Messages.query.filter_by(id=delete).delete()
+        db.session.commit()
+
+        flash('Success delete messages!', 'success')
+        return redirect(url_for('messages'))
     message_list = Messages.query.all()
     return render_template('pages/messages/messages.html', messages= message_list)
 
@@ -211,13 +227,16 @@ def add_messages():
         if type == "single":
             driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
             time.sleep(10)
-            logged = False
-            while not logged:
+
+            i = 0
+            while i == 0:
                 try:
-                    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "_3dqpi")))
-                    logged = True
-                except ValueError:
-                    logged = False
+                    element = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
+                    )
+                    i = 1
+                except:
+                    i = 0
 
             text = driver.find_element_by_class_name('_2S1VP')
             text.send_keys(msg)
@@ -226,7 +245,7 @@ def add_messages():
             element = driver.find_element_by_class_name('_35EW6')
             element.click()
 
-            messages = Messages("081380353611", target, msg, date_now, time_now)
+            messages = Messages(target, msg)
             db.session.add(messages)
             db.session.commit()
 
@@ -240,13 +259,15 @@ def add_messages():
                 driver.get('https://web.whatsapp.com/send?phone=' + contacts.phone + '&text=' + msg)
                 time.sleep(10)
 
-                logged = False
-                while not logged:
+                i = 0
+                while i == 0:
                     try:
-                        element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "_3dqpi")))
-                        logged = True
-                    except ValueError:
-                        logged = False
+                        element = WebDriverWait(driver, 10).until(
+                            EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
+                        )
+                        i = 1
+                    except:
+                        i = 0
 
                 text = driver.find_element_by_class_name('_2S1VP')
                 text.send_keys(msg)
@@ -271,14 +292,14 @@ def add_messages():
             while i == 0:
                 try:
                     element = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.CLASS_NAME, "_2wP_Y"))
+                        EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
                     )
                     i = 1
                 except:
                     i = 0
             groups_name = []
             for join_group in joined_group:
-                groups_name.append(join_group)
+                groups_name.append(join_group.group_name)
 
             for group_name in groups_name:
                 searchbox = driver.find_element_by_class_name("jN-F5")
@@ -288,7 +309,17 @@ def add_messages():
                 searchbox.send_keys(group_name)
                 searchbox.send_keys(Keys.ENTER)
 
-                time.sleep(5)
+                text = driver.find_element_by_class_name('_2S1VP')
+                text.send_keys(msg)
+
+                time.sleep(1)
+                element = driver.find_element_by_class_name('_35EW6')
+                element.click()
+
+                time.sleep(1)
+
+            flash("Messages sent!", 'success')
+            return redirect('messages')
 
 
 @app.route('/contacts', methods=["GET","POST"])
@@ -389,13 +420,19 @@ def import_groups():
             i = 1
         except:
             i = 0
-    time.sleep(5)
+    driver.execute_script("document.getElementById('app').style.height = 'auto';")
+    driver.execute_script("document.querySelector('body').style.overflow = 'scroll';")
+    driver.execute_script("document.querySelector('html').style.overflow = 'scroll';")
+
+    time.sleep(10)
     list_all = driver.find_elements_by_css_selector("._1wjpf:not(._3NFp9)")
-    time.sleep(2)
+    time.sleep(5)
+
 
     list_name = []
     for list in list_all:
         list_name.append(list.text)
+        app.logger.info(list.text)
 
     for list_group in list_name:
         staleElement = False
@@ -414,7 +451,7 @@ def import_groups():
         searchbox.send_keys(list_group)
         searchbox.send_keys(Keys.ENTER)
 
-        time.sleep(5)
+        time.sleep(2)
 
         # Click the burget btn
         burger_btn = driver.find_element_by_css_selector('._1i0-u [title=Menu]')
@@ -470,24 +507,67 @@ def add_groups():
                 "http://ngarang.com/link-grup-wa/daftar-link-grup-wa.php?search={}&searchby=name".format(keyword))
             driver.implicitly_wait(2)
             num = 1
+            nextPage = driver.find_elements_by_css_selector("#prev_next > a")
 
-            titles = driver.find_elements_by_class_name("wa-chat-title-text")
-            links = driver.find_elements_by_css_selector(".URLMessage")
-            listLinks = []
-            listTitle = []
+            countNextPage = len(nextPage)
 
-            for link in links:
-                listLinks.append(link.text)
+            if countNextPage == 2:
+                btnNextPage = driver.find_element_by_css_selector("#prev_next > a:nth-child(2)")
+            else:
+                btnNextPage = driver.find_element_by_css_selector("#prev_next > a:nth-child(1)")
 
-            for title in titles:
-                listTitle.append(title.text)
+                if btnNextPage.text == "Halaman berikutnya":
+                    btnNextAvailable = True
+                else:
+                    btnNextAvailable = False
 
-            list = 0
-            while list <= 23:
-                G = Groups(group_name=listTitle[list], link=listLinks[list], date_added=date_now)
-                db.session.add(G)
-                db.session.commit()
-                list += 1
+            while btnNextAvailable == True or btnNextAvailable == False:
+                titles = driver.find_elements_by_class_name("wa-chat-title-text")
+                links = driver.find_elements_by_css_selector(".URLMessage")
+                listLinks = []
+                listTitle = []
+
+                for link in links:
+                    listLinks.append(link.text)
+
+                for title in titles:
+                    listTitle.append(title.text)
+
+                list = 0
+                while list <= 23:
+                    app.logger.info(listTitle[list])
+                    G = Groups(group_name=listTitle[list], link=listLinks[list], date_added=date_now)
+                    db.session.add(G)
+                    db.session.commit()
+                    list += 1
+
+                nextPage = driver.find_elements_by_css_selector("#prev_next > a")
+
+                countNextPage = len(nextPage)
+
+                if countNextPage == 2:
+                    btnNextPage = driver.find_element_by_css_selector("#prev_next > a:nth-child(2)")
+                else:
+                    btnNextPage = driver.find_element_by_css_selector("#prev_next > a:nth-child(1)")
+
+                    if btnNextPage.text == "Halaman berikutnya":
+                        btnNextAvailable = True
+                    else:
+                        btnNextAvailable = False
+
+                if btnNextAvailable == False:
+                    break
+                else:
+                    nextPageClicked = False
+                    while nextPageClicked == False:
+                        try:
+                            app.logger.info(btnNextPage.text)
+                            btnNextPage.click()
+                            nextPageClicked = True
+                        except WebDriverException:
+                            nextPageClicked = False
+
+
             driver.close()
             flash("Success grab all groups with keyword "+keyword, "success")
             return redirect("groups")
@@ -507,8 +587,15 @@ def join_group():
         btn = driver.find_element_by_id('action-button')
         btn.click()
 
+        waitingDone = False
 
-        WebDriverWait(driver, 10).until( EC.element_to_be_clickable((By.CLASS_NAME, "PNlAR")))
+        while waitingDone == False:
+            try:
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "PNlAR")))
+                waitingDone = True
+            except WebDriverException:
+                waitingDone = False
+
 
         btn_join = driver.find_element_by_class_name("PNlAR")
         btn_join.click()
