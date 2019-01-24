@@ -356,7 +356,7 @@ def add_messages():
                 element.click()
 
                 time.sleep(1)
-
+    
             flash("Messages sent!", 'success')
             return redirect('messages')
         elif type == "cgroups":
