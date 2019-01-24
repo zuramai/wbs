@@ -1,0 +1,89 @@
+{% include 'include/header.html' %}
+
+<div class="content">
+	<div class="content-header">
+		<div class="page-title">
+			<h3>Senders</h3>
+		</div>
+		<div class="page-breadcumb">
+
+			<nav aria-label="breadcrumb">
+			  <ol class="breadcrumb">
+			    <li class="breadcrumb-item"><a href="#">Home</a></li>
+			    <li class="breadcrumb-item active" aria-current="page">Senders</li>
+			  </ol>
+			</nav>
+		</div>
+	</div>
+	<div class="content-body">
+
+		<section  class="chart">
+			<div class="panel">
+				<div class="panel-header d-flex align-items-center justify-content-between">
+						<div class="panel-title">
+							<i class="fa fa-user"></i> 	  	 Senders
+						</div>
+						<div>
+							<a href="{{ url_for('sender') }}/add" class="btn btn-primary" ><i class="fa fa-plus"></i></a>
+						</div>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-md-12">
+							{% with messages = get_flashed_messages(with_categories=true) %}
+								{% if messages %}
+									{% for category, message in messages %}
+										<div class="alert alert-{{ category }}" role="alert">
+											{{message}}
+										</div>
+									{% endfor %}
+								{% endif %}
+							{% endwith %}
+
+						</div>
+					</div>
+					<div class="table-responsive">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>Phone</th>
+									<th>Name</th>
+									<th>Status</th>
+									<th>Action</th>
+
+								</tr>
+							</thead>
+							<tbody>
+								{% for sender in data %}
+								<tr>
+									<td>{{ sender.id }}</td>
+									<td>{{ sender.phone}}</td>
+									<td>{{ sender.sender_name }}</td>
+									<td>
+                                        {% if sender.status == "Active": %}
+                                            <span class="badge badge-success">{{ sender.status }}</span>
+                                        {% else: %}
+                                        <span class="badge badge-danger">{{ sender.status }}</span>
+                                        {% endif  %}
+                                    </td>
+									<td>
+											<a href="?edit={{ sender.id }}" class="btn btn-primary" style="margin-bottom: 10px;">
+												<i class="fa fa-edit"></i> Edit
+											</a>
+											<a href="?delete={{ sender.id }}" class="btn btn-danger" style="margin-bottom: 10px;">
+												<i class="fa fa-trash"></i> Delete
+											</a>
+										</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+
+{% include 'include/footer.html' %}

@@ -7,9 +7,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import datetime, time, csv, sys,unicodedata
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from sqlalchemy import Column, String, TIMESTAMP, Text, Time, Date, Integer
 from werkzeug.security import generate_password_hash, check_password_hash
+from selenium.common.exceptions import NoSuchElementException
 
 app = Flask(__name__)
 login = LoginManager()
@@ -72,6 +74,21 @@ class Groups(db.Model):
     def get_id(self):
         return unicode(self.id)
 
+class Contacts_grouping(db.Model):
+    __tablename__ = "contacts_grouping"
+    id = Column('id', primary_key=1)
+    group_name = Column('group_name', String(100))
+    phone = Column('phone', String(14))
+    user = Column('user', String(100))
+    date = Column('date', Date())
+
+    def __init__(self, group_name, phone, user, date):
+        self.id = id
+        self.group_name = group_name
+        self.phone = phone
+        self.user = user
+        self.date = date
+
 class Joined_groups(db.Model):
     __tablename__ = "joined_groups"
     id = Column("id", primary_key=1)
@@ -99,22 +116,41 @@ class Contacts(db.Model):
         self.date_added = date_added
 
 
+class Sender(db.Model):
+    __tablename__ = "sender"
+    id = Column('id', primary_key=1)
+    phone = Column('phone', String(14))
+    user = Column('user', String(100))
+    sender_name = Column('sender_name', String(100))
+    status = Column('status', String(20))
+    date = Column('date', Date())
+
+    def __init__(self, phone, user, date, sender_name):
+        self.id = id
+        self.phone = phone
+        self.user = user
+        self.date = date
+        self.sender_name = sender_name
+
+
 class Messages(db.Model):
     __tablename__ = "messages"
     id = Column("id", primary_key=1)
     user = Column('user', String(100))
+    sender = Column('sender', String(14))
     receiver = Column('receiver', String(14))
     msg = Column('msg', Text())
     date = Column('date', Date())
     time = Column('time', Time())
 
-    def __init__(self, receiver, msg):
+    def __init__(self, sender, receiver, msg, date, time):
         self.id = id
+        self.sender = sender
         self.user = current_user.username
         self.receiver = receiver
         self.msg = msg
-        self.date = date_now
-        self.time = time_now
+        self.date = date
+        self.time = time
 
 def waitForButtonSend():
     i = 0
@@ -217,7 +253,10 @@ def messages():
 @app.route('/messages/add', methods=["POST","GET"])
 def add_messages():
     if request.method == "GET":
-        return render_template('pages/messages/add_messages.html')
+        all_groups = Contacts_grouping.query.filter_by(user=current_user.username).group_by(Contacts_grouping.group_name).all()
+
+        return render_template('pages/messages/add_messages.html', data=all_groups, datas= all_groups)
+
     else:
         type = request.form["type"]
         target = request.form["target"]
@@ -284,7 +323,7 @@ def add_messages():
             driver.close()
             flash("Success send messages to all contacts!", "success")
             return redirect("messages/add")
-        else:
+        elif type == "groups":
             joined_group = Joined_groups.query.all()
 
             driver.get("https://web.whatsapp.com/")
@@ -320,6 +359,48 @@ def add_messages():
 
             flash("Messages sent!", 'success')
             return redirect('messages')
+        elif type == "cgroups":
+            selected_groups = request.form.getlist('cgroups')
+            for selected in selected_groups:
+                contacts = Contacts_grouping.query.filter_by(group_name=selected)
+
+                for number in contacts:
+                    driver.get('https://web.whatsapp.com/send?phone={}&text={}'.format(number.phone, msg))
+
+                    # WAIT FOR ELEMENT SEND BUTTON CAN BE CLICKED
+                    i = 0
+                    while i == 0:
+                        try:
+                            element = WebDriverWait(driver, 10).until(
+                                EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
+                            )
+                            i = 1
+
+                            # CHECK IF THERE IS AN ERROR OR NOT
+                            try:
+                                popup = driver.find_element_by_css_selector('._1CnF3')
+                            except NoSuchElementException:
+                                print("No elements found")
+                            else:
+                                continue
+                        except:
+                            i = 0
+
+                    time.sleep(1)
+
+
+
+
+                    element = driver.find_element_by_class_name('_35EW6')
+                    element.click()
+
+                    messages = Messages("081380353611", target, msg, date_now, time_now)
+                    db.session.add(messages)
+                    db.session.commit()
+
+                    time.sleep(1)
+                return "waiting success"
+
 
 
 @app.route('/contacts', methods=["GET","POST"])
@@ -364,6 +445,58 @@ def contacts():
             flash("Success import contacts", "success")
             return redirect(url_for('contacts'))
 
+@app.route('/contacts/grouping', methods=['GET','POST'])
+def grouping():
+    if request.method == 'GET':
+        all_groups2 = Contacts_grouping.query.with_entities(Contacts_grouping.id, Contacts_grouping.group_name, func.count(Contacts_grouping.phone).label("count")).group_by(Contacts_grouping.group_name).all()
+        return render_template('pages/contacts/grouping/grouping.html', data=all_groups2)
+        # app.logger.info(all_groups2)
+    else:
+        phone = request.form['phone']
+        group_name = request.form['name']
+        count = request.form['count']
+        listPhone = phone.splitlines()
+
+        for line in listPhone:
+            newphone = line.replace('0','62', 1)
+            C = Contacts_grouping(group_name, newphone, current_user.username, date_now)
+            db.session.add(C)
+            db.session.commit()
+            app.logger.info(newphone)
+
+        return "success"
+
+@app.route('/contacts/grouping/edit/<id>', methods=['GET','POST'])
+def update(id):
+    if request.method == 'GET':
+        all = Contacts_grouping.query.filter_by(id=id)
+        for a in all:
+            group_name = a.group_name
+        list_contacts = Contacts_grouping.query.filter_by(group_name=group_name)
+        return render_template('pages/contacts/grouping/update.html', data=all, list_contacts=list_contacts)
+    else:
+        group_name = request.form['name']
+        phone_list = request.form['phone']
+
+        result = [x.strip() for x in phone_list.split(',')]
+
+        for no in result:
+            app.logger.info(no)
+            check = Contacts_grouping.query.filter_by(phone=no).count()
+
+            if check == 0:
+                ins = Contacts_grouping(group_name=group_name, phone=no, user=current_user.username, date=date_now)
+                db.session.add(ins)
+                db.session.commit()
+
+            else:
+                continue
+
+
+
+        flash("Success update data!", 'success')
+        return redirect(url_for('contacts') + "/grouping")
+
 
 @app.route('/contacts/add', methods=["POST","GET"])
 def add_contacts():
@@ -403,7 +536,6 @@ def Joined():
 
         flash('Success add joined group!', 'success')
         return redirect(url_for('groups')+'/joined_groups')
-
 
 
 @app.route('/groups/joined_groups/import')
@@ -604,7 +736,53 @@ def join_group():
     return redirect(url_for('groups'))
 
 
+@app.route('/sender', methods=['GET','POST'])
+def sender():
+    if request.method == 'GET':
+        if request.args.get('edit'):
+            edit = request.args.get('edit')
+            all = Sender.query.filter_by(id=edit).all()
 
+            return render_template('pages/sender/edit_sender.html', data=all)
+        elif request.args.get('delete'):
+            delete = request.args.get('delete')
+            Sender.query.filter_by(id=delete).delete()
+            db.session.commit()
+
+            flash("Success delete senders", 'success')
+            return redirect(url_for('messages'))
+
+        all = Sender.query.filter_by(user=current_user.username).all()
+        return render_template('pages/sender/sender.html', data=all)
+    else:
+        id = request.form['id']
+        phone = request.form['phone']
+        name = request.form['name'];
+
+        sender = Sender.query.filter_by(id=id).one()
+        sender.sender_name = name
+        sender.phone = phone
+        db.session.commit()
+
+        flash("Success edit data!", 'success')
+        return redirect(url_for('sender'))
+
+
+@app.route('/sender/add', methods=['GET','POST'])
+def add_sender():
+    if request.method == "GET":
+        return render_template('pages/sender/add_sender.html')
+    else:
+
+        name = request.form['name']
+        phone = request.form['phone']
+
+        S = Sender(phone, current_user.username, date_now, name)
+        db.session.add(S)
+        db.session.commit()
+
+        flash("Success add sender!",'success')
+        return redirect('sender')
 
 if __name__ == "__main__":
     app.run(debug=True, port=8081)

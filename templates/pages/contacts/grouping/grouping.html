@@ -1,0 +1,143 @@
+{% include 'include/header.html' %}
+
+<div class="content">
+	<div class="content-header">
+		<div class="page-title">
+			<h3>Contacts Grouping</h3>
+		</div>
+		<div class="page-breadcumb">
+
+			<nav aria-label="breadcrumb">
+			  <ol class="breadcrumb">
+			    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+			    <li class="breadcrumb-item" aria-current="page"><a href="{{ url_for('contacts') }}">Contacts</a></li>
+			    <li class="breadcrumb-item active" aria-current="page">Contacts Grouping</li>
+			  </ol>
+			</nav>
+		</div>
+	</div>
+	<div class="content-body">
+
+		<section  class="chart">
+			<div class="row">
+				<div class="col-md-7">
+					<div class="panel">
+						<div class="panel-header d-flex align-items-center justify-content-between">
+								<div class="panel-title">
+									<i class="fa fa-users"></i> 	  	 Add Grouping
+								</div>
+								
+						</div>
+						<div class="panel-body">
+							<div class="form">
+								<form method="POST" action="">
+									<div class="form-group">
+										<label>Group name</label>
+										<input type="text" name="name" class="form-control" placeholder="Contact's group fullname">
+									</div>
+									<div class="form-group">
+										<label>Phone Number</label>
+										<textarea  name="phone" class="form-control textarea" placeholder="Contact's number (separate by line)"></textarea>
+									</div>
+									<div class="form-group">
+										<label>Contact's count</label>
+										<input type="number" class="form-control count" name="count" readonly>
+									</div>
+									<div class="form-group" style="overflow:hidden;">
+										<input type="submit" value="Add" class="btn btn-primary float-right" name="">
+									</div>
+
+								</form>
+							</div>
+						</div>
+					</div>		
+				</div>
+				<div class="col-md-5">
+					<div class="panel">
+						<div class="panel-header">
+							<div class="panel-title">
+								<i class="fa fa-users"></i> 	  	 Instructions
+							</div>
+								
+						</div>
+						<div class="panel-body">
+							<ol>
+								<li>Input a group name </li>
+								<li>Input the contact's phone number. Separated by line </li>
+							</ol>
+						</div>
+					</div>
+				</div>
+			</div>			
+		</section>
+		<section class="list">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="panel chart">
+						<div class="panel-header">
+							<div class="panel-title">
+								<i class="fa fa-list-ul "></i> 	  	 List Contact's Grouping
+							</div>
+						</div>
+						<div class="panel-body">
+							<div class="panel-body-atas">
+								<div class="row">
+									<div class="col-md-6"></div>
+									<div class="col-md-6">
+										<div class="input-group mb-3">
+										  <div class="input-group-prepend">
+										    <span class="input-group-text" id="basic-addon1">
+										    	<i class="fa fa-search"></i>
+										    </span>
+										  </div>
+										  <input type="text" class="form-control" placeholder="Search group name" aria-label="Username" aria-describedby="basic-addon1">
+										</div>
+
+									</div>
+								</div>
+							</div>
+							<div class="panel-body-isi">
+								<div class="table-responsive">
+									<table class="table table-hover">
+										<thead>
+											<tr>
+												<th>#</th>
+												<th>Group name</th>
+												<th>Members</th>
+												<th>Action</th>
+
+											</tr>
+										</thead>
+										<tbody>
+											{% for all in data %}
+											<tr>
+												<td>{{ loop.index }}</td>
+												<td>{{ all.group_name }}</td>
+												<td>{{ all.count }}</td>
+												<td>
+														<a href="{{url_for('contacts')}}/grouping/edit/{{all.id}}" class="btn btn-primary" style="margin-bottom: 10px;">
+															<i class="fa fa-edit"></i> Manage
+														</a>
+														<a href="?delete={{ all.id }}" class="btn btn-danger" style="margin-bottom: 10px;">
+															<i class="fa fa-trash"></i> Hapus
+														</a>
+													</td>
+											</tr>
+											{% endfor %}
+										</tbody>
+									</table>
+								</div>
+							</div>	
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
+<!-- Button trigger modal -->
+
+<!-- Modal -->
+
+
+{% include 'include/footer.html' %}

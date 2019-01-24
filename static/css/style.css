@@ -222,7 +222,7 @@ body {
 	margin: 0 20px;
 	color: rgba(70,70,70);
 	font-size: 20px;
-	font-family: 'Lato';
+	font-family: 'Raleway';
 }
 
 .panel-header i {
@@ -406,13 +406,13 @@ body {
 
 /* -------- TABLES ----------*/
 
-.table > thead {
+.table-green > thead {
 	background-color: #1EA8AA;
 	color: #fff;
 	border:none;
 }
 
-.table > thead > tr > th {
+.table-green > thead > tr > th {
 	border:none;
 }
 
@@ -462,4 +462,12 @@ body {
 .btn-green:hover {
 	background-color:  #178082;
 	color: #fff;
+}
+
+.list-contact {
+	padding: 10px;
+}
+
+#cgroups_only {
+	display: none
 }

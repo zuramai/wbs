@@ -11,6 +11,7 @@
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='css/morris.css')}}">
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='css/waves.min.css')}}">
     <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
 </head>
 <body>
@@ -46,10 +47,24 @@
                             <span>Messages</span>
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item has-sub">
                         <a href="{{ url_for('contacts') }}" class="side-link waves-effect {% if request.path == '/contacts' %} active {% endif %}">
                             <i class="fa fa-user"></i>
                             <span>Contacts</span>
+                        </a>
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('contacts') }}" class="side-link {% if request.path == '/groups' %} active {% endif %}">All Contacts</a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('contacts') }}/grouping" class="side-link {% if request.path == '/groups/joined_groups' %} active {% endif %}">Contacts Grouping</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('sender') }}" class="side-link waves-effect {% if request.path == '/sender' %} active {% endif %}">
+                            <i class="fa fa-user"></i>
+                            <span>Sender</span>
                         </a>
                     </li>
                     <li class="nav-item has-sub">
