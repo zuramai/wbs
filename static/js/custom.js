@@ -32,6 +32,19 @@ $(document).ready(function() {
         $('#cgroups_only').css('display','none')
       }
     });
+    $('input[type=radio][name=sender]').change(function() {
+      if (this.value == 'randomSender') {
+          $('#randomSenderOnly').css('display','block')
+          $('#chooseSenderOnly').css('display','none')
+      } else if(this.value == 'chooseSender') {
+          $('#randomSenderOnly').css('display','none')
+          $('#chooseSenderOnly').css('display','block')
+      }else{
+          $('#randomSenderOnly').css('display','none')
+          $('#chooseSenderOnly').css('display','none')
+      }
+
+    });
 
     $('.textarea').keyup(function(event) {
       var text = $(".textarea").val();   

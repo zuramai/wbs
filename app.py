@@ -12,6 +12,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from sqlalchemy import Column, String, TIMESTAMP, Text, Time, Date, Integer
 from werkzeug.security import generate_password_hash, check_password_hash
 from selenium.common.exceptions import NoSuchElementException
+from classes.messages_add import Send
 
 app = Flask(__name__)
 login = LoginManager()
@@ -152,7 +153,14 @@ class Messages(db.Model):
         self.date = date
         self.time = time
 
-def waitForButtonSend():
+def checkElementExist(element_class):
+    try:
+        webdriver.find_element_by_class_name(element_class)
+    except NoSuchElementException:
+        return False
+    return True
+
+def waitForButtonSend(driver):
     i = 0
     while i == 0:
         try:
@@ -210,6 +218,10 @@ def register():
         password = request.form['password']
         username = request.form['username']
 
+        if (fullname is None) or (email is None) or (password is None) or (username is None):
+            return redirect(url_for('register'))
+            flash("Please complete the form", "danger")
+
         regs = User(name=fullname,username=username,password=password,email=email,picture='default.png',registered_at=date_now)
         db.session.add(regs)
         db.session.commit()
@@ -254,59 +266,50 @@ def messages():
 def add_messages():
     if request.method == "GET":
         all_groups = Contacts_grouping.query.filter_by(user=current_user.username).group_by(Contacts_grouping.group_name).all()
-
         return render_template('pages/messages/add_messages.html', data=all_groups, datas= all_groups)
 
-    else:
+    elif request.method == 'POST':
         type = request.form["type"]
         target = request.form["target"]
         msg = request.form['msg']
+        senderType = request.form['sender']
+
+        if senderType == "chooseSender":
+            senders = request.form.getlist("senders")
+
+            for countSender in senders:
+                app.logger.info(senders)
+        elif senderType == "randomSender":
+            numSender = request.form['number_of_senders']
+            activeSenderCount = Sender.query.filter_by(status='Active', user=current_user.username).count()
+
+            if int(numSender) > activeSenderCount:
+                flash("You only have {} sender active".format(activeSenderCount), 'danger')
+                return redirect('messages/add')
+        else:
+            flash("Internal error.", 'danger')
+            return redirect('messages/add')
 
         driver = webdriver.Chrome()
+
         if type == "single":
             driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
             time.sleep(10)
 
-            i = 0
-            while i == 0:
-                try:
-                    element = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
-                    )
-                    i = 1
-                except:
-                    i = 0
-
-            text = driver.find_element_by_class_name('_2S1VP')
-            text.send_keys(msg)
-
-            time.sleep(1)
-            element = driver.find_element_by_class_name('_35EW6')
-            element.click()
-
-            messages = Messages(target, msg)
-            db.session.add(messages)
-            db.session.commit()
-
-            driver.close()
+            waitForButtonSend(driver)
+            send = Send(driver, db, date_now, time_now)
+            send.single(target, msg, Messages)
 
             flash('Message sent!', 'success')
             return redirect(url_for('messages'))
+
         elif type == "all":
             all_contacts = Contacts.query.all()
             for contacts in all_contacts:
                 driver.get('https://web.whatsapp.com/send?phone=' + contacts.phone + '&text=' + msg)
                 time.sleep(10)
 
-                i = 0
-                while i == 0:
-                    try:
-                        element = WebDriverWait(driver, 10).until(
-                            EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
-                        )
-                        i = 1
-                    except:
-                        i = 0
+                waitForButtonSend(driver)
 
                 text = driver.find_element_by_class_name('_2S1VP')
                 text.send_keys(msg)
@@ -327,15 +330,7 @@ def add_messages():
             joined_group = Joined_groups.query.all()
 
             driver.get("https://web.whatsapp.com/")
-            i = 0
-            while i == 0:
-                try:
-                    element = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
-                    )
-                    i = 1
-                except:
-                    i = 0
+            waitForButtonSend(driver)
             groups_name = []
             for join_group in joined_group:
                 groups_name.append(join_group.group_name)
@@ -356,14 +351,14 @@ def add_messages():
                 element.click()
 
                 time.sleep(1)
-    
+
             flash("Messages sent!", 'success')
             return redirect('messages')
         elif type == "cgroups":
             selected_groups = request.form.getlist('cgroups')
             for selected in selected_groups:
-                contacts = Contacts_grouping.query.filter_by(group_name=selected)
 
+                contacts = Contacts_grouping.query.filter_by(group_name=selected)
                 for number in contacts:
                     driver.get('https://web.whatsapp.com/send?phone={}&text={}'.format(number.phone, msg))
 
@@ -387,9 +382,6 @@ def add_messages():
                             i = 0
 
                     time.sleep(1)
-
-
-
 
                     element = driver.find_element_by_class_name('_35EW6')
                     element.click()
