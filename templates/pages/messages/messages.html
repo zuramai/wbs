@@ -47,6 +47,7 @@
 							<thead>
 								<tr>
 									<th>#</th>
+									<th>Sender</th>
 									<th>Receiver</th>
 									<th>Date</th>
 									<th>Time</th>
@@ -58,6 +59,7 @@
 								{% for message in messages %}
 								<tr>
 									<td>{{ message.id }}</td>
+									<td>{{ message.sender }}</td>
 									<td>{{ message.receiver }}</td>
 									<td>{{ message.date }}</td>
 									<td>{{ message.time }}</td>

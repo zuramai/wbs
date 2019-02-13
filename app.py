@@ -10,6 +10,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from sqlalchemy import Column, String, TIMESTAMP, Text, Time, Date, Integer
+from sqlalchemy import Table, Column, Integer, ForeignKey
+from sqlalchemy.orm import relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 from selenium.common.exceptions import NoSuchElementException
 from classes.messages_add import Send
@@ -50,6 +52,7 @@ class User(UserMixin, db.Model):
         self.picture = picture
         self.registered_at = registered_at
 
+
 class Groups(db.Model):
     __tablename__ = "Groups"
     id = Column("id", primary_key=1)
@@ -75,6 +78,7 @@ class Groups(db.Model):
     def get_id(self):
         return unicode(self.id)
 
+
 class Contacts_grouping(db.Model):
     __tablename__ = "contacts_grouping"
     id = Column('id', primary_key=1)
@@ -83,6 +87,7 @@ class Contacts_grouping(db.Model):
     user = Column('user', String(100))
     date = Column('date', Date())
 
+
     def __init__(self, group_name, phone, user, date):
         self.id = id
         self.group_name = group_name
@@ -90,18 +95,7 @@ class Contacts_grouping(db.Model):
         self.user = user
         self.date = date
 
-class Joined_groups(db.Model):
-    __tablename__ = "joined_groups"
-    id = Column("id", primary_key=1)
-    group_name = Column('group_name', String(255))
-    user = Column('user', String(100))
-    date_added = Column('date_added', TIMESTAMP)
 
-    def __init__(self, group_name, user, date_added):
-        self.id = id
-        self.group_name = group_name
-        self.user = user
-        self.date_added = date_added
 
 class Contacts(db.Model):
     __tablename__ = "contacts"
@@ -125,13 +119,31 @@ class Sender(db.Model):
     sender_name = Column('sender_name', String(100))
     status = Column('status', String(20))
     date = Column('date', Date())
+    joined_groups = relationship("Joined_groups", backref='sender')
 
-    def __init__(self, phone, user, date, sender_name):
+    def __init__(self, phone, user, date, sender_name, status):
         self.id = id
         self.phone = phone
         self.user = user
         self.date = date
+        self.status = status
         self.sender_name = sender_name
+
+class Joined_groups(db.Model):
+    __tablename__ = "joined_groups"
+    id = Column("id", primary_key=1)
+    group_name = Column('group_name', String(255))
+    user = Column('user', String(100))
+    date_added = Column('date_added', TIMESTAMP)
+    sender_id = Column(Integer, ForeignKey('sender.id'))
+
+
+    def __init__(self, group_name, user, date_added, sender_id):
+        self.id = id
+        self.group_name = group_name
+        self.user = user
+        self.sender_id = sender_id
+        self.date_added = date_added
 
 
 class Messages(db.Model):
@@ -153,12 +165,14 @@ class Messages(db.Model):
         self.date = date
         self.time = time
 
+
 def checkElementExist(element_class):
     try:
         webdriver.find_element_by_class_name(element_class)
     except NoSuchElementException:
         return False
     return True
+
 
 def waitForButtonSend(driver):
     i = 0
@@ -168,9 +182,20 @@ def waitForButtonSend(driver):
                 EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
             )
             i = 1
+
+            # CHECK IF THERE IS AN ERROR OR NOT
+            try:
+                popup = driver.find_element_by_css_selector('._1CnF3')
+                if popup:
+                    errorMsg = driver.find_element_by_class_name('_3lLzD')
+                    driver.close()
+                    flash(errorMsg.text, 'danger')
+            except NoSuchElementException:
+                print("No elements found")
+            else:
+                continue
         except:
             i = 0
-
 
 
 @login.user_loader
@@ -242,12 +267,13 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-@app.route('/settings')
+@app.route('/settings', methods=['POST','GET'])
 @login_required
 def settings():
-    data_user = User.query.filter_by(id=current_user.id)
-    return render_template('pages/users/settings.html', data=data_user)
-
+    if request.method == 'POST':
+        data_user = User.query.filter_by(id=current_user.id)
+        return render_template('pages/users/settings.html', data=data_user)
+    
 
 @app.route('/messages')
 def messages():
@@ -266,7 +292,8 @@ def messages():
 def add_messages():
     if request.method == "GET":
         all_groups = Contacts_grouping.query.filter_by(user=current_user.username).group_by(Contacts_grouping.group_name).all()
-        return render_template('pages/messages/add_messages.html', data=all_groups, datas= all_groups)
+        senders = Sender.query.filter_by(user=current_user.username, status='Active')
+        return render_template('pages/messages/add_messages.html', data=all_groups, datas= all_groups, senders=senders)
 
     elif request.method == 'POST':
         type = request.form["type"]
@@ -283,6 +310,7 @@ def add_messages():
             numSender = request.form['number_of_senders']
             activeSenderCount = Sender.query.filter_by(status='Active', user=current_user.username).count()
 
+
             if int(numSender) > activeSenderCount:
                 flash("You only have {} sender active".format(activeSenderCount), 'danger')
                 return redirect('messages/add')
@@ -290,108 +318,97 @@ def add_messages():
             flash("Internal error.", 'danger')
             return redirect('messages/add')
 
-        driver = webdriver.Chrome()
+
 
         if type == "single":
-            driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
-            time.sleep(10)
+            if senderType == "chooseSender":
+                senders = request.form.getlist("senders")
+                for sender in senders:
+                    driver = webdriver.Chrome()
+                    driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
+                    time.sleep(10)
 
-            waitForButtonSend(driver)
-            send = Send(driver, db, date_now, time_now)
-            send.single(target, msg, Messages)
+                    waitForButtonSend(driver)
+                    send = Send(driver, db, date_now, time_now)
+                    send.single(target, msg, Messages, sender)
 
+                    driver.close()
+
+            elif senderType == 'randomSender':
+                num = 1
+                while(num <= int(numSender)):
+                    driver = webdriver.Chrome()
+                    driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
+                    time.sleep(10)
+
+                    waitForButtonSend(driver)
+                    send = Send(driver, db, date_now, time_now)
+                    send.single(target, msg, Messages, "Random")
+                    driver.close()
+                    num += 1
             flash('Message sent!', 'success')
             return redirect(url_for('messages'))
 
         elif type == "all":
-            all_contacts = Contacts.query.all()
-            for contacts in all_contacts:
-                driver.get('https://web.whatsapp.com/send?phone=' + contacts.phone + '&text=' + msg)
-                time.sleep(10)
-
-                waitForButtonSend(driver)
-
-                text = driver.find_element_by_class_name('_2S1VP')
-                text.send_keys(msg)
-
-                time.sleep(1)
-                element = driver.find_element_by_class_name('_35EW6')
-                element.click()
-
-                messages = Messages("081380353611", target, msg, date_now, time_now)
-                db.session.add(messages)
-                db.session.commit()
-
-                time.sleep(1)
-            driver.close()
+            if senderType == "chooseSender":
+                senders = request.form.getlist("senders")
+                for sender in senders:
+                    driver = webdriver.Chrome()
+                    all_contacts = Contacts.query.all()
+                    app.logger.info(all_contacts)
+                    send = Send(driver, db, date_now, time_now)
+                    send.all(msg, all_contacts,time,waitForButtonSend,Messages, sender)
+                    driver.close()
+            elif senderType == 'randomSender':
+                for num in numSender:
+                    driver = webdriver.Chrome()
+                    driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
+                    all_contacts = Contacts.query.all()
+                    send = Send(driver, db, date_now, time_now)
+                    send.all(msg, all_contacts, time, waitForButtonSend, Messages, "Random Sender")
+                    driver.close()
             flash("Success send messages to all contacts!", "success")
             return redirect("messages/add")
         elif type == "groups":
-            joined_group = Joined_groups.query.all()
+            driver = webdriver.Chrome()
 
-            driver.get("https://web.whatsapp.com/")
-            waitForButtonSend(driver)
-            groups_name = []
-            for join_group in joined_group:
-                groups_name.append(join_group.group_name)
+            senders = request.form.getlist("senders")
 
-            for group_name in groups_name:
-                searchbox = driver.find_element_by_class_name("jN-F5")
+            for sender_phone in senders:
+                driver.get("https://web.whatsapp.com/")
+                i = 0
+                while i == 0:
+                    try:
+                        element = WebDriverWait(driver, 10).until(
+                            EC.element_to_be_clickable((By.CLASS_NAME, "jN-F5"))
+                        )
+                        i = 1
+                    except:
+                        i = 0
+                select = Sender.query.filter_by(phone=sender_phone).first()
+                joined_group = Joined_groups.query.filter_by(user=current_user.username, sender_id=select.id)
 
-                time.sleep(1)
+                for joined_group_detail in joined_group:
+                    app.logger.info(joined_group_detail.group_name)
 
-                searchbox.send_keys(group_name)
-                searchbox.send_keys(Keys.ENTER)
 
-                text = driver.find_element_by_class_name('_2S1VP')
-                text.send_keys(msg)
+                    send = Send(driver, db, date_now, time_now)
+                    send.groups(time, joined_group, msg, Keys)
 
-                time.sleep(1)
-                element = driver.find_element_by_class_name('_35EW6')
-                element.click()
+                    flash("Messages sent!", 'success')
+            return redirect('messages')
+        elif type == "cgroups":
+            senders = request.form.getlist("senders")
 
-                time.sleep(1)
+            for sender in senders:
+                driver = webdriver.Chrome()
+                selected_groups = request.form.getlist('cgroups')
+                send = Send(driver, db, date_now, time_now)
+                send.cgroups(Messages,msg,time,selected_groups,Contacts_grouping, waitForButtonSend, sender)
 
             flash("Messages sent!", 'success')
             return redirect('messages')
-        elif type == "cgroups":
-            selected_groups = request.form.getlist('cgroups')
-            for selected in selected_groups:
 
-                contacts = Contacts_grouping.query.filter_by(group_name=selected)
-                for number in contacts:
-                    driver.get('https://web.whatsapp.com/send?phone={}&text={}'.format(number.phone, msg))
-
-                    # WAIT FOR ELEMENT SEND BUTTON CAN BE CLICKED
-                    i = 0
-                    while i == 0:
-                        try:
-                            element = WebDriverWait(driver, 10).until(
-                                EC.element_to_be_clickable((By.CLASS_NAME, "_35EW6"))
-                            )
-                            i = 1
-
-                            # CHECK IF THERE IS AN ERROR OR NOT
-                            try:
-                                popup = driver.find_element_by_css_selector('._1CnF3')
-                            except NoSuchElementException:
-                                print("No elements found")
-                            else:
-                                continue
-                        except:
-                            i = 0
-
-                    time.sleep(1)
-
-                    element = driver.find_element_by_class_name('_35EW6')
-                    element.click()
-
-                    messages = Messages("081380353611", target, msg, date_now, time_now)
-                    db.session.add(messages)
-                    db.session.commit()
-
-                    time.sleep(1)
-                return "waiting success"
 
 
 
@@ -516,12 +533,16 @@ def Joined():
             return redirect('groups/joined_groups')
         else:
             joined_groups_all = Joined_groups.query.all()
-            return render_template('pages/groups/joined_groups.html', data=joined_groups_all)
-    else:
+            for j in joined_groups_all:
+                app.logger.info(j.sender_id)
+            senders = Sender.query.filter_by(user=current_user.username,status='Active')
+            return render_template('pages/groups/joined_groups.html', data=joined_groups_all,senders=senders)
+    elif request.method == "POST":
         group_name = request.form['name']
+        sender = request.form['senders']
 
         logged_user = current_user.username
-        G = Joined_groups(group_name, logged_user, date_now)
+        G = Joined_groups(group_name, logged_user, date_now, sender)
 
         db.session.add(G)
         db.session.commit()
@@ -530,8 +551,9 @@ def Joined():
         return redirect(url_for('groups')+'/joined_groups')
 
 
-@app.route('/groups/joined_groups/import')
+@app.route('/groups/joined_groups/import', methods=['POST'])
 def import_groups():
+    choosedSender = request.form['senders']
     driver = webdriver.Chrome()
     driver.get('https://web.whatsapp.com/')
 
@@ -552,9 +574,10 @@ def import_groups():
     list_all = driver.find_elements_by_css_selector("._1wjpf:not(._3NFp9)")
     time.sleep(5)
 
-
     list_name = []
     for list in list_all:
+        if list.text.startswith("+62"):
+            continue
         list_name.append(list.text)
         app.logger.info(list.text)
 
@@ -587,19 +610,13 @@ def import_groups():
             info = driver.find_element_by_css_selector('[title="Group info"]')
             driver.implicitly_wait(10)
 
-            J = Joined_groups(list_group, current_user.username, date_now)
+            J = Joined_groups(list_group, current_user.username, date_now, choosedSender)
             db.session.add(J)
             db.session.commit()
+
         except:
             continue
-
-
-
-
-
-
-
-
+    driver.close()
     flash('Success add groups', 'success')
     return redirect(url_for('groups')+'/joined_groups')
 
@@ -769,7 +786,7 @@ def add_sender():
         name = request.form['name']
         phone = request.form['phone']
 
-        S = Sender(phone, current_user.username, date_now, name)
+        S = Sender(phone, current_user.username, date_now, name, 'Active')
         db.session.add(S)
         db.session.commit()
 

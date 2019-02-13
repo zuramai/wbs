@@ -32,7 +32,7 @@
 							  </button>
 							  <div class="dropdown-menu dropdown-menu-right">
 								  <a href="#" data-toggle="modal" data-target="#exampleModal" class="dropdown-item" >Add group</a>
-								  <a href="{{ url_for('groups') }}/joined_groups/import" class="dropdown-item" type="button">Import your groups</a>
+								  <a href="#" data-toggle='modal' data-target="#modalImport" class="dropdown-item" type="button">Import your groups</a>
 								  <a href="{{url_for('messages')}}/add" class="dropdown-item" type="button">Send message to all group</a>
 					
 							  </div>
@@ -61,6 +61,7 @@
 									<th>#</th>
 									<th>Group Name</th>
 									<th>Date added</th>
+									<th>Sender</th>
 									<th>Action</th>
 								</tr>
 							</thead>
@@ -71,6 +72,7 @@
 									<td>{{ group.id }}</td>
 									<td>{{ group.group_name }}</td>
 									<td>{{ group.date_added }}</td>
+									<td>{{ group.sender.sender_name }}</td>
 									<td>
 											<a href="?delete={{ group.id }}" class="btn btn-danger" style="margin-bottom: 10px;">
 												<i class="fa fa-trash"></i>
@@ -97,20 +99,61 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="modal-body">
-        
-        	<form method="POST" action="">
-	        	<div class="form-group">
-	        		<label>Group name : </label>
-	        		<input type="text" class="form-control" name="name">
-	        	</div>
-        	</form>
-        
+      <form method="POST" action="">
+	      <div class="modal-body">
+	        
+		        	<div class="form-group">
+		        		<label>Group name : </label>
+		        		<input type="text" class="form-control" name="name">
+		        	</div>
+		        	<div class="form-group">
+	        			<label>Sender account you want to import</label>
+	        			<select name="senders" class="form-control">
+	        				<option value="">Choose one</option>
+	        				{% for sender in senders %}
+	        					<option value="{{ sender.id }}">{{ sender.sender_name }} ({{sender.phone}})</option>
+	        				{% endfor %}
+	        			</select>
+	        		</div>
+	        
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+	        <button type="submit" class="btn btn-primary">Save</button>
+	      </div>
+		</form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalImport" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Import your group</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save</button>
-      </div>
+        <form method="POST" action="{{ url_for('groups') }}/joined_groups/import">
+	      <div class="modal-body">
+	        <div class="form">
+	        		<div class="form-group">
+	        			<label>Sender account you want to import</label>
+	        			<select name="senders" class="form-control">
+	        				<option value="">Choose one</option>
+	        				{% for sender in senders %}
+	        					<option value="{{ sender.id }}">{{ sender.sender_name }} ({{sender.phone}})</option>
+	        				{% endfor %}
+	        			</select>
+	        		</div>
+	        </div>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+	        <button type="submit" class="btn btn-primary">Save changes</button>
+	      </div>
+       </form>
     </div>
   </div>
 </div>

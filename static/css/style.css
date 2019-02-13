@@ -471,3 +471,10 @@ body {
 #cgroups_only {
 	display: none
 }
+
+#randomSenderOnly {
+	display: none
+}
+#chooseSenderOnly {
+	display: none
+}
