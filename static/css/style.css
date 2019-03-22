@@ -90,10 +90,6 @@ body {
 }
 
 
-.navbar-brand {
-	padding: 0;
-}
-
 .sidebar {
 	position: absolute;
 	top: 0;
@@ -477,4 +473,24 @@ body {
 }
 #chooseSenderOnly {
 	display: none
+}
+
+.has-sub > ul {
+	display: none;
+}
+
+#group_notif {
+	display: none;
+}
+
+
+@media screen and (max-width: 768px) {
+	.main-sidebar {
+		width: 0;
+		opacity: 0;
+	}
+
+	.admin {
+		margin-left: 0;
+	}
 }

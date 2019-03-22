@@ -26,6 +26,14 @@ $(document).ready(function() {
           $('#single-only').css('display','none')
       }
 
+      if (this.value == 'groups') {
+          $('#randomSenderGroup').css('display','none')
+          $("#group_notif").css('display','block');
+      } else {
+          $('#randomSenderGroup').css('display','block')
+          $("#group_notif").css('display','none');
+      }
+
       if(this.value == "cgroups") {
         $('#cgroups_only').css('display','block')
       }else{
@@ -53,5 +61,16 @@ $(document).ready(function() {
       $('.count').val(count)
       console.log(count)
     });
+
+    
+    $('#directory').change(function(){
+      console.log(this.files[0]);
+   });
+
+    $('.has-sub').click(function(e) {
+        $(this).find('ul').slideDown('fast')
+    });
+
+    // $('.has-sub ul li a').attr('target','_blank')
 
 });

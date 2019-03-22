@@ -54,6 +54,16 @@
 
 						</div>
 					</div>
+					<form method="GET" class="row" action="">
+						<div class="input-group mb-3 col-md-6 offset-md-6">
+						  <div class="input-group-prepend c">
+						    <span class="input-group-text" id="basic-addon1">
+						    	<i class="fa fa-search"></i>
+						    </span>
+						  </div>
+						  <input type="text" class="form-control" placeholder="Search group name" aria-label="Username" name="search" aria-describedby="basic-addon1">
+						</div>
+					</form>
 					<div class="table-responsive">
 						<table class="table table-hover ">
 							<thead>
@@ -66,7 +76,7 @@
 								</tr>
 							</thead>
 							<tbody>
-							{% for group in data %}
+							{% for group in data.items %}
 								
 								<tr>
 									<td>{{ group.id }}</td>
@@ -84,6 +94,21 @@
 							</tbody>
 						</table>
 					</div>
+					<ul class="pagination">
+						{% if data.has_prev %}
+							<li class="page-item">
+								<a href="{{ data.prev_num }}" class="page-link">Prev</a>
+							</li>
+						{% endif %}
+						<li class="page-item">
+							<a href="{{ data.current_num }}" class="page-link">{{ data.page }}</a>
+						</li>
+						{% if data.has_next %}
+							<li class="page-item">
+								<a href="{{ url_for('groups') }}/joined_groups/{{ data.next_num }}" class="page-link">Next</a>
+							</li>				
+						{% endif %}
+					</ul>
 				</div>
 			</div>
 		</section>

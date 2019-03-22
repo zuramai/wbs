@@ -55,7 +55,7 @@
 								</tr>
 							</thead>
 							<tbody>
-							{% for contact in contacts %}
+							{% for contact in contacts.items %}
 								<tr>
 									<td>{{ contact.id }}</td>
 									<td>{{ contact.name }}</td>
@@ -68,10 +68,26 @@
 									</td>
 								</tr>
 							{% endfor%}
-								<?php } ?>
+					
 							</tbody>
 						</table>
 					</div>
+					<ul class="pagination">
+							{% if contacts.has_prev %}
+								<li class="page-item">
+									<a href="{{ url_for('contacts', page=contacts.prev_num) }}" class="page-link">Prev</a>
+								</li>
+							{% endif %}
+							<li class="page-item">
+								<a href="{{ url_for('contacts', page=contacts.prev_num) }}" class="page-link">{{ contacts.page }}</a>
+							</li>
+							{% if contacts.has_next %}
+								<li class="page-item">
+									<a href="{{ url_for('contacts', page=contacts.next_num) }}" class="page-link">Next</a>
+								</li>				
+							{% endif %}
+
+					</ul>
 				</div>
 			</div>
 		</section>

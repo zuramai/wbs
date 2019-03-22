@@ -29,6 +29,15 @@
 						</div>
 				</div>
 				<div class="panel-body">
+					{% with messages = get_flashed_messages(with_categories=true) %}
+								{% if messages %}
+									{% for category, message in messages %}
+										<div class="alert alert-{{ category }}" role="alert">
+											{{message}}
+										</div>
+									{% endfor %}
+								{% endif %}
+							{% endwith %}
 					<div class="row">
 						{% for user in data %}
 						<div class="col-md-6">
@@ -42,15 +51,15 @@
 								<form method="POST" action="">
 									<div class="form-group" id="single-only">
 										<label>Full name</label>
-										<input type="text" name="target" class="form-control" value="{{user.name}}">
+										<input type="text" name="name" class="form-control" value="{{user.name}}">
 									</div>
-									<div class="text-group">
+									<div class="form-group">
 										<label>Email </label>
 										<input type="email" class="form-control" name="email" value="{{user.email}}">
 									</div>
 									<div class="form-group">
 										<label>Username</label>
-										<input type="text" name="username" class="form-control" value="{{user.username}}">
+										<input type="text" name="username" class="form-control" value="{{user.username}}" disabled="">
 									</div>
 									<div class="form-group" id="single-only">
 										<label>Password</label>

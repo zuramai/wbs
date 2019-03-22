@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import datetime, time, csv, sys,unicodedata
+import datetime, time, csv, sys,unicodedata, os
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -13,6 +13,7 @@ from sqlalchemy import Column, String, TIMESTAMP, Text, Time, Date, Integer
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from selenium.common.exceptions import NoSuchElementException
 from classes.messages_add import Send
 
@@ -22,7 +23,8 @@ login.init_app(app)
 
 
 app.secret_key = "Flash"
-app.config['UPLOAD_FOLDER'] = '/tmp'
+app.config['UPLOAD_FOLDER'] = './tmp'
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'exe', 'jpg', 'jpeg', 'gif'])
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqldb://root:''@localhost:3306/wbs'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -74,9 +76,6 @@ class Groups(db.Model):
 
     def is_anonymous(self):
         return False
-
-    def get_id(self):
-        return unicode(self.id)
 
 
 class Contacts_grouping(db.Model):
@@ -173,6 +172,9 @@ def checkElementExist(element_class):
         return False
     return True
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def waitForButtonSend(driver):
     i = 0
@@ -183,18 +185,16 @@ def waitForButtonSend(driver):
             )
             i = 1
 
+        except:
             # CHECK IF THERE IS AN ERROR OR NOT
             try:
-                popup = driver.find_element_by_css_selector('._1CnF3')
+                popup = driver.find_element_by_css_selector('._3lLzD')
                 if popup:
-                    errorMsg = driver.find_element_by_class_name('_3lLzD')
                     driver.close()
-                    flash(errorMsg.text, 'danger')
+                    return 'errorFound'
             except NoSuchElementException:
                 print("No elements found")
-            else:
-                continue
-        except:
+
             i = 0
 
 
@@ -206,11 +206,14 @@ def load_user(user_id):
 def unauthorized_callback():
     return redirect(url_for('login'))
 
-@app.route('/index')
+@app.route('/index', methods=['GET'])
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html')
+    contacts = Contacts.query.count()
+    messages = Messages.query.count()
+    groups = Joined_groups.query.count()
+    return render_template('index.html', contacts=contacts, messages=messages, groups=groups)
 
 
 @app.route('/login', methods=["POST","GET"])
@@ -270,13 +273,34 @@ def logout():
 @app.route('/settings', methods=['POST','GET'])
 @login_required
 def settings():
-    if request.method == 'POST':
+    if request.method == 'GET':
         data_user = User.query.filter_by(id=current_user.id)
         return render_template('pages/users/settings.html', data=data_user)
-    
+    elif request.method == 'POST':
+        fullname = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
 
+        app.logger.info("{} {} {} {}".format(fullname,email,password,current_user.id))
+
+        if(not fullname) or (not email) or (not password):
+            flash('Please complete the form!', 'danger')
+            return redirect(url_for('settings'))
+
+        data = User.query.filter_by(id=current_user.id).first()
+        data.name = fullname
+        data.email = email
+        data.password = password
+        db.session.commit()
+
+        flash("Success update data!", "success")
+        return redirect(url_for('settings'))
+
+
+@app.route('/messages/<int:page>')
 @app.route('/messages')
-def messages():
+def messages(page=1):
+    per_page = 10
     delete = request.args.get('delete')
     if delete:
         Messages.query.filter_by(id=delete).delete()
@@ -284,7 +308,7 @@ def messages():
 
         flash('Success delete messages!', 'success')
         return redirect(url_for('messages'))
-    message_list = Messages.query.all()
+    message_list = Messages.query.order_by(Messages.id.desc()).paginate(page,per_page, error_out=False)
     return render_template('pages/messages/messages.html', messages= message_list)
 
 
@@ -300,26 +324,45 @@ def add_messages():
         target = request.form["target"]
         msg = request.form['msg']
         senderType = request.form['sender']
+        imagePath = "/"
+
+
+        isFile = False
+        if 'files' not in request.files:
+            isFile = False
+        else:
+            files = request.files['files']
+            isFile = True
+
+        if(isFile == True):
+            if files and allowed_file(files.filename):
+                filename = secure_filename(files.filename)
+                files.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                path = sys.path[0]
+                imagePath = path+"\\tmp\\"+filename
+                app.logger.info(imagePath)
+
 
         if senderType == "chooseSender":
             senders = request.form.getlist("senders")
-
             for countSender in senders:
                 app.logger.info(senders)
         elif senderType == "randomSender":
             numSender = request.form['number_of_senders']
             activeSenderCount = Sender.query.filter_by(status='Active', user=current_user.username).count()
 
-
-            if int(numSender) > activeSenderCount:
+            if not numSender:
+                flash("Please input number of sender",'danger')
+                return redirect('messages/add')
+            elif int(numSender) > activeSenderCount:
                 flash("You only have {} sender active".format(activeSenderCount), 'danger')
                 return redirect('messages/add')
+
         else:
-            flash("Internal error.", 'danger')
+            flash("Please choose sender first", 'danger')
             return redirect('messages/add')
 
-
-
+        # ========== SINGLE TYPE =============
         if type == "single":
             if senderType == "chooseSender":
                 senders = request.form.getlist("senders")
@@ -328,12 +371,15 @@ def add_messages():
                     driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
                     time.sleep(10)
 
-                    waitForButtonSend(driver)
-                    send = Send(driver, db, date_now, time_now)
-                    send.single(target, msg, Messages, sender)
+                    wait = waitForButtonSend(driver)
+                    if(wait == 'errorFound'):
+                        flash('Error','danger')
+                        return redirect('messages')
+
+                    send = Send(driver, db, date_now, time_now, time, Keys)
+                    send.single(target, msg, Messages, sender, waitForButtonSend,isFile,imagePath)
 
                     driver.close()
-
             elif senderType == 'randomSender':
                 num = 1
                 while(num <= int(numSender)):
@@ -341,14 +387,21 @@ def add_messages():
                     driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
                     time.sleep(10)
 
-                    waitForButtonSend(driver)
-                    send = Send(driver, db, date_now, time_now)
-                    send.single(target, msg, Messages, "Random")
+                    wait = waitForButtonSend(driver)
+                    if (wait == 'errorFound'):
+                        flash('Error', 'danger')
+                        return redirect('messages')
+                    send = Send(driver, db, date_now, time_now, time, Keys)
+                    send.single(target, msg, Messages, "random", waitForButtonSend, isFile, imagePath)
                     driver.close()
                     num += 1
+            else:
+                flash('Please choose sender', 'danger')
+                return redirect(url_for('messages'))
             flash('Message sent!', 'success')
             return redirect(url_for('messages'))
 
+        # ========== ALL CONTACTS TYPE =============
         elif type == "all":
             if senderType == "chooseSender":
                 senders = request.form.getlist("senders")
@@ -356,64 +409,83 @@ def add_messages():
                     driver = webdriver.Chrome()
                     all_contacts = Contacts.query.all()
                     app.logger.info(all_contacts)
-                    send = Send(driver, db, date_now, time_now)
-                    send.all(msg, all_contacts,time,waitForButtonSend,Messages, sender)
+                    send = Send(driver, db, date_now, time_now, time, Keys)
+                    send.all(msg, all_contacts,time, waitForButtonSend, Messages, sender, isFile, imagePath,app)
                     driver.close()
             elif senderType == 'randomSender':
-                for num in numSender:
+                num = 0
+                while num <= int(numSender):
                     driver = webdriver.Chrome()
                     driver.get('https://web.whatsapp.com/send?phone=' + target + '&text=' + msg)
                     all_contacts = Contacts.query.all()
-                    send = Send(driver, db, date_now, time_now)
-                    send.all(msg, all_contacts, time, waitForButtonSend, Messages, "Random Sender")
+                    send = Send(driver, db, date_now, time_now, time, Keys)
+                    send.all(msg, all_contacts, time, waitForButtonSend, Messages, "Random Sender", isFile, imagePath,app)
                     driver.close()
+                    num+=1
+            else:
+                flash('Please choose sender', 'danger')
+                return redirect(url_for('messages'))
             flash("Success send messages to all contacts!", "success")
             return redirect("messages/add")
+
+        # ========== GROUP TYPE =============
         elif type == "groups":
-            driver = webdriver.Chrome()
-
-            senders = request.form.getlist("senders")
-
-            for sender_phone in senders:
-                driver.get("https://web.whatsapp.com/")
-                i = 0
-                while i == 0:
-                    try:
-                        element = WebDriverWait(driver, 10).until(
-                            EC.element_to_be_clickable((By.CLASS_NAME, "jN-F5"))
-                        )
-                        i = 1
-                    except:
-                        i = 0
-                select = Sender.query.filter_by(phone=sender_phone).first()
-                joined_group = Joined_groups.query.filter_by(user=current_user.username, sender_id=select.id)
-
-                for joined_group_detail in joined_group:
-                    app.logger.info(joined_group_detail.group_name)
-
-
-                    send = Send(driver, db, date_now, time_now)
-                    send.groups(time, joined_group, msg, Keys)
-
-                    flash("Messages sent!", 'success')
-            return redirect('messages')
-        elif type == "cgroups":
-            senders = request.form.getlist("senders")
-
-            for sender in senders:
+            if senderType == "chooseSender":
                 driver = webdriver.Chrome()
-                selected_groups = request.form.getlist('cgroups')
-                send = Send(driver, db, date_now, time_now)
-                send.cgroups(Messages,msg,time,selected_groups,Contacts_grouping, waitForButtonSend, sender)
+                senders = request.form.getlist("senders")
+
+                for sender_phone in senders:
+                    driver.get("https://web.whatsapp.com/")
+                    i = 0
+                    while i == 0:
+                        try:
+                            element = WebDriverWait(driver, 10).until(
+                                EC.element_to_be_clickable((By.CLASS_NAME, "jN-F5"))
+                            )
+                            i = 1
+                        except:
+                            i = 0
+                    select = Sender.query.filter_by(phone=sender_phone).first()
+                    joined_group = Joined_groups.query.filter_by(user=current_user.username, sender_id=select.id)
+
+                    for joined_group_detail in joined_group:
+                        app.logger.info(joined_group_detail.group_name)
+
+
+                        send = Send(driver, db, date_now, time_now, time, Keys)
+                        send.groups(sender_phone, Messages,time, joined_group, msg, Keys, isFile, imagePath)
+            else:
+                flash("Failed to send!", 'danger')
+                return redirect('messages')
+            flash("Messages sent!", 'success')
+            return redirect('messages')
+        # ========== CONTACTS GROUP TYPE =============
+        elif type == "cgroups":
+
+            if senderType == 'chooseSender':
+                senders = request.form.getlist("senders")
+                for sender in senders:
+                    driver = webdriver.Chrome()
+                    selected_groups = request.form.getlist('cgroups')
+                    send = Send(driver, db, date_now, time_now, time)
+                    send.cgroups(Messages,msg,time,selected_groups,Contacts_grouping, waitForButtonSend, sender, isFile, imagePath)
+            elif senderType == 'randomSender':
+                num = 0
+                while num <= int(numSender):
+                    driver = webdriver.Chrome()
+                    selected_groups = request.form.getlist('cgroups')
+                    send = Send(driver, db, date_now, time_now, time)
+                    send.cgroups(Messages, msg, time, selected_groups, Contacts_grouping, waitForButtonSend, "Random sender", isFile, imagePath)
 
             flash("Messages sent!", 'success')
             return redirect('messages')
 
 
 
-
+@app.route('/contacts/<int:page>', methods=["GET"])
 @app.route('/contacts', methods=["GET","POST"])
-def contacts():
+def contacts(page=1):
+    per_page = 10
     if request.method == "GET":
         delete = request.args.get('delete')
         if delete:
@@ -423,11 +495,8 @@ def contacts():
             flash("Success delete contact", 'success')
             return redirect("contacts")
         else:
-            contacts_list = Contacts.query.limit(5)
+            contacts_list = Contacts.query.order_by(Contacts.id.desc()).paginate(page, per_page, error_out=False)
             return render_template('pages/contacts/contacts.html', contacts=contacts_list)
-
-
-
     else:
         file = request.files['contacts']
         file.save("static/files/csv/"+file.filename)
@@ -453,14 +522,34 @@ def contacts():
 
             flash("Success import contacts", "success")
             return redirect(url_for('contacts'))
-
 @app.route('/contacts/grouping', methods=['GET','POST'])
 def grouping():
     if request.method == 'GET':
-        all_groups2 = Contacts_grouping.query.with_entities(Contacts_grouping.id, Contacts_grouping.group_name, func.count(Contacts_grouping.phone).label("count")).group_by(Contacts_grouping.group_name).all()
+        dele = request.args.get('delete')
+        search = request.args.get('search')
+        if dele:
+            dela = Contacts_grouping.query.filter_by(id=dele).delete()
+            db.session.commit()
+            flash('Success delete data','success')
+            return redirect('contacts/grouping')
+
+        if search:
+            all_groups2 = Contacts_grouping.query.filter(
+                Contacts_grouping.group_name.like('%{}%'.format(search))).with_entities(Contacts_grouping.id,
+                                                                                        Contacts_grouping.group_name,
+                                                                                        func.count(
+                                                                                            Contacts_grouping.phone).label(
+                                                                                            "count")).group_by(
+                Contacts_grouping.group_name).all()
+        else:
+            all_groups2 = Contacts_grouping.query.with_entities(Contacts_grouping.id, Contacts_grouping.group_name,
+                                                                func.count(Contacts_grouping.phone).label(
+                                                                    "count")).group_by(
+                Contacts_grouping.group_name).all()
+
         return render_template('pages/contacts/grouping/grouping.html', data=all_groups2)
         # app.logger.info(all_groups2)
-    else:
+    elif request.method == 'POST':
         phone = request.form['phone']
         group_name = request.form['name']
         count = request.form['count']
@@ -473,11 +562,13 @@ def grouping():
             db.session.commit()
             app.logger.info(newphone)
 
-        return "success"
+        flash('Success add contacts grouping','success')
+        return redirect('contacts/grouping')
 
 @app.route('/contacts/grouping/edit/<id>', methods=['GET','POST'])
 def update(id):
     if request.method == 'GET':
+
         all = Contacts_grouping.query.filter_by(id=id)
         for a in all:
             group_name = a.group_name
@@ -510,7 +601,22 @@ def update(id):
 @app.route('/contacts/add', methods=["POST","GET"])
 def add_contacts():
     if request.method == "POST":
-        return "POSTED"
+        name = request.form['name']
+        phone = request.form['phone']
+
+        if (not name) or (not phone):
+            flash('Please complete the form','danger')
+            return redirect('contacts/add')
+
+
+        ct = Contacts(phone,name,date_now)
+        db.session.add(ct)
+        db.session.commit()
+
+        flash('Success add contact {}'.format(phone), 'success')
+        return redirect('/contacts')
+
+
     else:
         return render_template('pages/contacts/add_contacts.html')
 
@@ -520,10 +626,14 @@ def groups():
     grup = Groups.query.all()
     return render_template('pages/groups/groups.html', grup=grup)
 
+@app.route('/groups/<string:type>/<int:page>')
 @app.route('/groups/joined_groups', methods=['GET', 'POST'])
-def Joined():
+def Joined(page=1, type='joined_groups'):
+    per_page=10
     if request.method == "GET":
         delete = request.args.get('delete')
+        search = request.args.get('search')
+
 
         if delete:
             Joined_groups.query.filter_by(id=delete).delete()
@@ -532,14 +642,22 @@ def Joined():
             flash('Success delete joined groups', 'success')
             return redirect('groups/joined_groups')
         else:
-            joined_groups_all = Joined_groups.query.all()
-            for j in joined_groups_all:
-                app.logger.info(j.sender_id)
+            if search:
+                joined_groups_all = Joined_groups.query.filter(Joined_groups.group_name.like("%{}%".format(search))).order_by(Joined_groups.id.asc()).paginate(page,per_page)
+                app.logger.info("INI SEARCH = "+search)
+            else:
+                joined_groups_all = Joined_groups.query.order_by(Joined_groups.id.asc()).paginate(page, per_page)
+                app.logger.info("INI BUKAN SEARCH ")
+
             senders = Sender.query.filter_by(user=current_user.username,status='Active')
             return render_template('pages/groups/joined_groups.html', data=joined_groups_all,senders=senders)
     elif request.method == "POST":
         group_name = request.form['name']
         sender = request.form['senders']
+
+        if (not group_name) or (not sender):
+            flash('Please complete the form', 'danger')
+            return redirect('groups/joined_groups')
 
         logged_user = current_user.username
         G = Joined_groups(group_name, logged_user, date_now, sender)
@@ -633,6 +751,9 @@ def add_groups():
             group_name = request.form['name']
             link = request.form['link']
 
+            if (not group_name) or (not link):
+                flash('Please complete the form', 'danger')
+                return redirect('groups/add')
             G = Groups(group_name=group_name, link=link, date_added=date_now)
             db.session.add(G)
             db.session.commit()
@@ -642,7 +763,9 @@ def add_groups():
 
         elif 'scrape' in request.form:
             keyword = request.form['keyword']
-
+            if not keyword:
+                flash('Please complete the form', 'danger')
+                return redirect('groups/add')
             driver = webdriver.Chrome()
             driver.get(
                 "http://ngarang.com/link-grup-wa/daftar-link-grup-wa.php?search={}&searchby=name".format(keyword))
